@@ -171,6 +171,7 @@ if __name__ == '__main__':
   argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
     default=VALID_PRIVACY_STATUSES[0], help="Video privacy status.")
   args = argparser.parse_args()
+
   
   if not os.path.exists(args.file):
     exit("Please specify a valid file using the --file= parameter.")
