@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 #import httplib
+from turtle import title
 import httplib2
 from http import client
 import os
@@ -86,20 +87,20 @@ def get_authenticated_service(args):
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
     http=credentials.authorize(httplib2.Http()))
 
-def initialize_upload(youtube, options):
+def initialize_upload(youtube, video_data):
   tags = None
-  if options.keywords:
-    tags = options.keywords.split(",")
+  #if options.keywords:
+  #  tags = options.keywords.split(",")
 
   body=dict(
     snippet=dict(
-      title=options.title,
-      description=options.description,
-      tags=tags,
-      categoryId=options.category
+      title=video_data['title'],
+      description=video_data['description'],
+      tags=video_data['keywords'],
+      categoryId=video_data['category']
     ),
     status=dict(
-      privacyStatus=options.privacyStatus
+      privacyStatus=video_data['privacyStatus']
     )
   )
 
@@ -118,7 +119,7 @@ def initialize_upload(youtube, options):
     # practice, but if you're using Python older than 2.6 or if you're
     # running on App Engine, you should set the chunksize to something like
     # 1024 * 1024 (1 megabyte).
-    media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
+    media_body=MediaFileUpload(video_data['file'], chunksize=-1, resumable=True)
   )
 
   resumable_upload(insert_request)
@@ -158,26 +159,49 @@ def resumable_upload(insert_request):
       print ("Sleeping %f seconds and then retrying..." % sleep_seconds)
       time.sleep(sleep_seconds)
 
-if __name__ == '__main__':
-  argparser.add_argument("--file", required=True, help="Video file to upload")
-  argparser.add_argument("--title", help="Video title", default="Test Title")
-  argparser.add_argument("--description", help="Video description",
-    default="Test Description")
-  argparser.add_argument("--category", default="22",
-    help="Numeric video category. " +
-      "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
-  argparser.add_argument("--keywords", help="Video keywords, comma separated",
-    default="")
-  argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-    default=VALID_PRIVACY_STATUSES[0], help="Video privacy status.")
-  args = argparser.parse_args()
 
-  
-  if not os.path.exists(args.file):
+def upload_video(video_data):
+  args = argparser.parse_args()
+  if not os.path.exists(video_data['file']):
     exit("Please specify a valid file using the --file= parameter.")
 
   youtube = get_authenticated_service(args)
   try:
-    initialize_upload(youtube, args)
+    initialize_upload(youtube, video_data)
   except HttpError as e:
-    print ("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
+    print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
+
+
+if __name__ == '__main__':
+ # argparser.add_argument("--file", required=True, help="Video file to upload")
+ # argparser.add_argument("--title", help="Video title", default="Test Title")
+ # argparser.add_argument("--description", help="Video description",
+ #   default="Test Description")
+ # argparser.add_argument("--category", default="22",
+ #   help="Numeric video category. " +
+ #     "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
+ # argparser.add_argument("--keywords", help="Video keywords, comma separated",
+ #   default="")
+ # argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
+ #   default=VALID_PRIVACY_STATUSES[0], help="Video privacy status.")
+ # args = argparser.parse_args()
+
+  video_data = {
+        "file": "/Users/neerajsingh/Documents/projects/youtube_automation/created_video/test.mp4",
+        "title": "Best of memes!",
+        "description": "#shorts \n Giving you the hottest memes of the day with funny comments!",
+        "keywords":"meme,reddit",
+        "category":"28",
+        "privacyStatus":"private"
+    }
+  
+  upload_video(video_data)
+
+ # if not os.path.exists(args.file):
+  #  exit("Please specify a valid file using the --file= parameter.")
+
+  #youtube = get_authenticated_service(args)
+  #try:
+  #  initialize_upload(youtube, video_data)
+  #except HttpError as e:
+  #  print ("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
